@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/app_name"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.921" />
+
+    <ImageView
+        android:id="@+id/previewBitmap"
+        android:layout_width="408dp"
+        android:layout_height="408dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:srcCompat="@tools:sample/avatars" />
+
+    <ToggleButton
+        android:id="@+id/resToggle"
+        android:tag="resize"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="15dp"
+        android:layout_marginLeft="15dp"
+        android:minWidth="180dp"
+        android:textOn="Resize On"
+        android:textOff="Resize Off"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/previewBitmap" />
+
+    <ToggleButton
+        android:id="@+id/cropToggle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="15dp"
+        android:minWidth="180dp"
+        android:tag="crop"
+        android:textOff="Crop Off"
+        android:textOn="Crop On"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/resToggle" />
+
+    <ToggleButton
+        android:id="@+id/padToggle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:tag="pad"
+        android:layout_marginRight="15dp"
+        android:minWidth="180dp"
+        android:textOff="Padding Off"
+        android:textOn="Padding On"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/resToggle" />
+
+    <ToggleButton
+        android:id="@+id/rotToggle"
+        android:tag="rot"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="15dp"
+        android:minWidth="180dp"
+        android:textOn="Rotation On"
+        android:textOff="Rotation Off"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/padToggle" />
+
+    <ToggleButton
+        android:id="@+id/grayToggle"
+        android:tag="gray"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="15dp"
+        android:minWidth="180dp"
+        android:textOn="Gray On"
+        android:textOff="Gray Off"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/rotToggle" />
+
+    <ToggleButton
+        android:id="@+id/normToggle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:tag="norm"
+        android:minWidth="180dp"
+        android:textOff="Normalization Off"
+        android:textOn="Normalization On"
+        android:layout_marginRight="15dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/rotToggle" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

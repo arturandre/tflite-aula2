@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">aula1</string>
+    <string name="resize_btn">Resize image</string>
+    <string name="original_btn">Original image</string>
+</resources>

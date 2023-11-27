@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.aula1.databinding.ActivityMainBinding
 
 import org.tensorflow.lite.DataType;
+import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.support.common.TensorOperator
 import org.tensorflow.lite.support.common.ops.NormalizeOp
 import org.tensorflow.lite.support.image.ImageOperator
@@ -19,7 +20,11 @@ import org.tensorflow.lite.support.image.ops.ResizeOp
 import org.tensorflow.lite.support.image.ops.ResizeWithCropOrPadOp
 import org.tensorflow.lite.support.image.ops.Rot90Op
 import org.tensorflow.lite.support.image.ops.TransformToGrayscaleOp
+import java.io.FileInputStream
+import java.io.IOException
 import java.lang.ClassCastException
+import java.nio.MappedByteBuffer
+import java.nio.channels.FileChannel
 
 // Initialization code
 
@@ -61,6 +66,8 @@ var bitmap: Bitmap? = null
 // tensor type (uint8 in this case) that the TensorFlow Lite interpreter needs.
 var tensorImage: TensorImage? = TensorImage(DataType.UINT8)
 var processedBitmap: Bitmap? = null
+
+
 
 
 // Toggle buttons checked state change
@@ -122,6 +129,7 @@ class MainActivity : AppCompatActivity() {
         // Loading sampling image into a TensorImage
         tensorImage?.load(bitmap)
         tensorImage = imageProcessor?.process(tensorImage)
+        val results = classifySequence()
 
         // Processed TensorImage back into an bitmap
         processedBitmap = tensorImage?.bitmap
@@ -162,5 +170,65 @@ class MainActivity : AppCompatActivity() {
                 binding.previewBitmap
             )
         )
+    }
+
+    //Ref:
+    //https://towardsdatascience.com/spam-classification-in-android-with-tensorflow-lite-cde417e81260
+    @Throws(IOException::class)
+    private fun loadModelFile(): MappedByteBuffer {
+        val MODEL_ASSETS_PATH = "model.tflite"
+        val assetFileDescriptor = assets.openFd(MODEL_ASSETS_PATH)
+        val fileInputStream = FileInputStream(assetFileDescriptor.getFileDescriptor())
+        val fileChannel = fileInputStream.getChannel()
+        val startoffset = assetFileDescriptor.getStartOffset()
+        val declaredLength = assetFileDescriptor.getDeclaredLength()
+        return fileChannel.map(FileChannel.MapMode.READ_ONLY, startoffset, declaredLength)
+    }
+
+    //fun classifySequence ( sequence : IntArray ): FloatArray {
+    fun classifySequence (): FloatArray {
+        val interpreter = Interpreter( loadModelFile() )
+        //val inputs : Array<FloatArray> = arrayOf( sequence.map{ it.toFloat() }.toFloatArray() )
+        val inputs : Array<FloatArray> = arrayOf(
+            floatArrayOf( 0.3f, 0.8f, 0.4f, 0.5f ),
+            floatArrayOf( 0.4f, 0.1f, 0.8f, 0.5f ),
+            floatArrayOf( 0.7f, 0.9f, 0.8f, 0.4f ),
+        )
+
+
+        // 3-classes probabilities in the output
+        val outputs : Array<FloatArray> = arrayOf(
+            floatArrayOf( 0.0f,0.0f,0.0f ),
+            floatArrayOf( 0.0f,0.0f,0.0f ),
+            floatArrayOf( 0.0f,0.0f,0.0f )
+        )
+        interpreter.run( inputs , outputs )
+        Log.d("ModelOutputs",
+            "example 0: "
+                    + outputs[0][0].toString()
+                    + " - "
+                    + outputs[1][0].toString()
+                    + " - "
+                    + outputs[2][0].toString()
+        )
+        Log.d("ModelOutputs",
+            "example 1: "
+                    +
+                    outputs[0][1].toString()
+                    + " - "
+                    + outputs[1][1].toString()
+                    + " - "
+                    + outputs[2][1].toString()
+        )
+        Log.d("ModelOutputs",
+            "example 2: "
+                    +
+                    outputs[0][2].toString()
+                    + " - "
+                    + outputs[1][2].toString()
+                    + " - "
+                    + outputs[2][2].toString()
+        )
+        return outputs[0]
     }
 }

@@ -1,19 +1,13 @@
 package com.example.aula1
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.util.Log
-import android.widget.CompoundButton
-import android.widget.ImageView
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.example.aula1.databinding.ActivityMainBinding
 
-import org.tensorflow.lite.DataType;
 import org.tensorflow.lite.Interpreter
-import org.tensorflow.lite.support.common.TensorOperator
 import org.tensorflow.lite.support.common.ops.NormalizeOp
-import org.tensorflow.lite.support.image.ImageOperator
 import org.tensorflow.lite.support.image.ImageProcessor
 import org.tensorflow.lite.support.image.TensorImage
 import org.tensorflow.lite.support.image.ops.ResizeOp
@@ -54,55 +48,17 @@ var opMapF = mapOf(
     "norm" to normOp
 )
 
+val classToName = mapOf(
+    0 to "Adélie",
+    1 to "Chinstrap",
+    2 to "Gentoo"
+)
+
 /*var imageProcessor = ImageProcessor.Builder()
     .add(ResizeOp(224, 224, ResizeOp.ResizeMethod.BILINEAR))
     .build()*/
 
-var imageProcessorBuilder: ImageProcessor.Builder? = null
-var imageProcessor: ImageProcessor? = null
-var bitmap: Bitmap? = null
 
-// Create a TensorImage object. This creates the tensor of the corresponding
-// tensor type (uint8 in this case) that the TensorFlow Lite interpreter needs.
-var tensorImage: TensorImage? = TensorImage(DataType.UINT8)
-var processedBitmap: Bitmap? = null
-
-
-
-
-// Toggle buttons checked state change
-fun opToggleButtonChangeListeners(bitmap: Bitmap, previewBitmap: ImageView):
-        CompoundButton.OnCheckedChangeListener {
-    return CompoundButton.OnCheckedChangeListener { buttonView, isChecked ->
-
-        binding.previewBitmap.setImageBitmap(bitmap)
-        //Log.d("MyTag", buttonView.tag as String + " " + isChecked)
-        opMap[buttonView.tag as String] = isChecked
-        tensorImage = TensorImage(DataType.UINT8)
-        tensorImage?.load(bitmap)
-
-        for ((key, value) in opMap) {
-            if (value) {
-                try {
-                    imageProcessorBuilder = ImageProcessor.Builder()
-                    imageProcessorBuilder?.add(opMapF[key] as ImageOperator)
-                    imageProcessor = imageProcessorBuilder?.build()
-                    tensorImage = imageProcessor?.process(tensorImage)
-                } catch (e: ClassCastException) {
-                    // Used for normalize operator
-                    imageProcessorBuilder = ImageProcessor.Builder()
-                    imageProcessorBuilder?.add(opMapF[key] as TensorOperator)
-                    imageProcessor = imageProcessorBuilder?.build()
-                    tensorImage = imageProcessor?.process(tensorImage)
-                }
-
-            }
-        }
-        // Processed TensorImage back into an bitmap
-        processedBitmap = tensorImage?.bitmap
-        binding.previewBitmap.setImageBitmap(processedBitmap)
-    }
-}
 
 
 // Create an ImageProcessor with all ops required. For more ops, please
@@ -111,6 +67,27 @@ fun opToggleButtonChangeListeners(bitmap: Bitmap, previewBitmap: ImageView):
 
 private lateinit var binding: ActivityMainBinding
 
+fun <T : Comparable<T>> argmax(iterable: Iterable<T>): Int? {
+    var iterator = iterable.iterator()
+
+    if (!iterator.hasNext()) return null
+
+    var maxIndex = 0
+    var currentIndex = 0
+    var maxValue = iterator.next()
+
+    while (iterator.hasNext()){
+        currentIndex++
+        val value = iterator.next()
+        if (value > maxValue){
+            maxValue = value
+            maxIndex = currentIndex
+        }
+    }
+
+    return maxIndex
+}
+
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -118,58 +95,49 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
+        val outputs = classifySequence()
+        val cls = listOf(
+            argmax(outputs[0].asIterable()),
+            argmax(outputs[1].asIterable()),
+            argmax(outputs[2].asIterable()),
+            )
+        var outputStr = ("example 0: \n"
+                    + outputs[0][0].toString()
+                    + " | "
+                    + outputs[0][1].toString()
+                    + " | "
+                    + outputs[0][2].toString()
+                    + "\n"
+                    + "Class: " + cls[0] + " : " + classToName[cls[0]]
+                )
 
-        // Sample image loader
-        var bitmap = assets
-            .open("cat1.png")
-            .use(BitmapFactory::decodeStream)
 
-        binding.previewBitmap.setImageBitmap(bitmap)
+        val cls1 = argmax(outputs[1].asIterable())
+        outputStr = (outputStr + "\n\n"
+                    + "example 1: \n"
+                    +
+                    outputs[1][0].toString()
+                    + " | "
+                    + outputs[1][1].toString()
+                    + " | "
+                    + outputs[1][2].toString()
+                    + "\n"
+                    + "Class: " + cls[1] + " : " + classToName[cls[1]]
+                    )
+        val cls2 = argmax(outputs[2].asIterable())
+        outputStr = (outputStr + "\n\n"
+                    + "example 2: \n"
+                    +
+                    outputs[2][0].toString()
+                    + " | "
+                    + outputs[2][1].toString()
+                    + " | "
+                    + outputs[2][2].toString()
+                    + "\n"
+                    + "Class: " + cls[2] + " : " + classToName[cls[2]]
+                    )
 
-        // Loading sampling image into a TensorImage
-        tensorImage?.load(bitmap)
-        tensorImage = imageProcessor?.process(tensorImage)
-        val results = classifySequence()
-
-        // Processed TensorImage back into an bitmap
-        processedBitmap = tensorImage?.bitmap
-
-        binding.resToggle.setOnCheckedChangeListener(
-            opToggleButtonChangeListeners(
-                bitmap,
-                binding.previewBitmap
-            )
-        )
-        binding.cropToggle.setOnCheckedChangeListener(
-            opToggleButtonChangeListeners(
-                bitmap,
-                binding.previewBitmap
-            )
-        )
-        binding.padToggle.setOnCheckedChangeListener(
-            opToggleButtonChangeListeners(
-                bitmap,
-                binding.previewBitmap
-            )
-        )
-        binding.rotToggle.setOnCheckedChangeListener(
-            opToggleButtonChangeListeners(
-                bitmap,
-                binding.previewBitmap
-            )
-        )
-        binding.grayToggle.setOnCheckedChangeListener(
-            opToggleButtonChangeListeners(
-                bitmap,
-                binding.previewBitmap
-            )
-        )
-        binding.normToggle.setOnCheckedChangeListener(
-            opToggleButtonChangeListeners(
-                bitmap,
-                binding.previewBitmap
-            )
-        )
+        binding.outputLog.setText(outputStr, TextView.BufferType.EDITABLE)
     }
 
     //Ref:
@@ -185,14 +153,15 @@ class MainActivity : AppCompatActivity() {
         return fileChannel.map(FileChannel.MapMode.READ_ONLY, startoffset, declaredLength)
     }
 
-    //fun classifySequence ( sequence : IntArray ): FloatArray {
-    fun classifySequence (): FloatArray {
+    //fun classifySequence ( inputs : Array<FloatArray> ): Array<FloatArray> {
+    fun classifySequence (): Array<FloatArray> {
+
         val interpreter = Interpreter( loadModelFile() )
-        //val inputs : Array<FloatArray> = arrayOf( sequence.map{ it.toFloat() }.toFloatArray() )
+
         val inputs : Array<FloatArray> = arrayOf(
             floatArrayOf( 0.3f, 0.8f, 0.4f, 0.5f ),
             floatArrayOf( 0.4f, 0.1f, 0.8f, 0.5f ),
-            floatArrayOf( 0.7f, 0.9f, 0.8f, 0.4f ),
+            floatArrayOf( 0.7f, 0.9f, 0.8f, 0.4f),
         )
 
 
@@ -203,32 +172,33 @@ class MainActivity : AppCompatActivity() {
             floatArrayOf( 0.0f,0.0f,0.0f )
         )
         interpreter.run( inputs , outputs )
+
         Log.d("ModelOutputs",
             "example 0: "
                     + outputs[0][0].toString()
                     + " - "
-                    + outputs[1][0].toString()
+                    + outputs[0][1].toString()
                     + " - "
-                    + outputs[2][0].toString()
+                    + outputs[0][2].toString()
         )
         Log.d("ModelOutputs",
             "example 1: "
                     +
-                    outputs[0][1].toString()
+                    outputs[1][0].toString()
                     + " - "
                     + outputs[1][1].toString()
                     + " - "
-                    + outputs[2][1].toString()
+                    + outputs[1][2].toString()
         )
         Log.d("ModelOutputs",
             "example 2: "
                     +
-                    outputs[0][2].toString()
+                    outputs[2][0].toString()
                     + " - "
-                    + outputs[1][2].toString()
+                    + outputs[2][1].toString()
                     + " - "
                     + outputs[2][2].toString()
         )
-        return outputs[0]
+        return outputs
     }
 }
